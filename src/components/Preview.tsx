@@ -250,6 +250,14 @@ export default function Preview() {
                             ? renderGridFormat([...inClassTerms, ...outClassTerms], data.tableConfigs.inClass)
                             : renderListFormat([...inClassTerms, ...outClassTerms], data.tableConfigs.inClass, 'Combined Terms')
                         }
+                        {/* InClass Summary */}
+                        {data.summaryConfig.sections.filter(s => s.type === 'InClass').map(section =>
+                            renderSummaryTable(section, data.systemValues['InClass'] || {})
+                        )}
+                        {/* OutClass Summary */}
+                        {data.summaryConfig.sections.filter(s => s.type === 'OutClass').map(section =>
+                            renderSummaryTable(section, data.systemValues['OutClass'] || {})
+                        )}
                     </>
                 )}
 

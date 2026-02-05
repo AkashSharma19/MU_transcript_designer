@@ -8,26 +8,34 @@ import TranscriptEditor from './components/TranscriptEditor';
 const SAMPLE_TEMPLATES: TranscriptTemplate[] = [];
 
 function App() {
-  const [view, setView] = useState<'dashboard' | 'editor'>('dashboard');
-  const [templates, setTemplates] = useState<TranscriptTemplate[]>(SAMPLE_TEMPLATES);
-  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
-
-  // Load from localStorage on mount (optional persistence)
-  useEffect(() => {
+  const [view, setView] = useState<'dashboard' | 'editor'>(() => {
+    return (localStorage.getItem('transcript_app_view') as 'dashboard' | 'editor') || 'dashboard';
+  });
+  const [templates, setTemplates] = useState<TranscriptTemplate[]>(() => {
     const saved = localStorage.getItem('transcript_templates');
     if (saved) {
       try {
-        setTemplates(JSON.parse(saved));
+        return JSON.parse(saved);
       } catch (e) {
         console.error("Failed to load templates", e);
       }
     }
-  }, []);
+    return SAMPLE_TEMPLATES;
+  });
+  const [activeTemplateId, setActiveTemplateId] = useState<string | null>(() => {
+    return localStorage.getItem('transcript_active_template_id');
+  });
 
-  // Save to localStorage whenever templates change
+  // Save state to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('transcript_templates', JSON.stringify(templates));
-  }, [templates]);
+    localStorage.setItem('transcript_app_view', view);
+    if (activeTemplateId) {
+      localStorage.setItem('transcript_active_template_id', activeTemplateId);
+    } else {
+      localStorage.removeItem('transcript_active_template_id');
+    }
+  }, [templates, view, activeTemplateId]);
 
   const handleCreateNew = () => {
     setActiveTemplateId(null);

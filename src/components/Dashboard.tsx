@@ -10,6 +10,28 @@ interface DashboardProps {
 }
 
 // Reusable MultiSelect Component
+const formatDate = (dateStr: string | undefined) => {
+    if (!dateStr || dateStr === "-") return "-";
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString();
+    } catch (e) {
+        return dateStr;
+    }
+};
+
+const formatTime = (dateStr: string | undefined) => {
+    if (!dateStr || dateStr === "-") return "";
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return "";
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (e) {
+        return "";
+    }
+};
+
 function MultiSelect({
     options,
     selected,
@@ -114,8 +136,18 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
     const [generatingReport, setGeneratingReport] = useState<string | null>(null); // Track report generation per term
     const [cgpa, setCgpa] = useState<{ value: number, date: string, tillTerm: string } | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [selectedProgram, setSelectedProgram] = useState("");
-    const [selectedCohort, setSelectedCohort] = useState("");
+    const [selectedProgram, setSelectedProgram] = useState(() => {
+        return localStorage.getItem('calc_last_program') || "";
+    });
+    const [selectedCohort, setSelectedCohort] = useState(() => {
+        return localStorage.getItem('calc_last_cohort') || "";
+    });
+
+    // Save selections
+    useEffect(() => {
+        localStorage.setItem('calc_last_program', selectedProgram);
+        localStorage.setItem('calc_last_cohort', selectedCohort);
+    }, [selectedProgram, selectedCohort]);
     const [transcriptData, setTranscriptData] = useState<{ url: string, date: string } | null>(null);
     const [termReportStatus, setTermReportStatus] = useState<Record<string, { url: string, date: string } | null>>({});
 
@@ -184,7 +216,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
                 ...tgpaStatus,
                 [termId]: {
                     value: (Math.random() * (4.0 - 3.0) + 3.0),
-                    date: new Date().toLocaleDateString()
+                    date: new Date().toISOString()
                 }
             };
             setTgpaStatus(newStatus);
@@ -208,7 +240,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
 
             const newCgpa = {
                 value: avg,
-                date: new Date().toLocaleDateString(),
+                date: new Date().toISOString(),
                 tillTerm: lastTermName
             };
 
@@ -238,7 +270,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
                 ...termReportStatus,
                 [termId]: {
                     url: `mock_report_${termId}`,
-                    date: new Date().toLocaleDateString()
+                    date: new Date().toISOString()
                 }
             };
             setTermReportStatus(newReportStatus);
@@ -354,7 +386,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
             setIsGenerating(false);
             const mockData = {
                 url: "mock_zip_url",
-                date: new Date().toLocaleDateString()
+                date: new Date().toISOString()
             };
             setTranscriptData(mockData);
             saveState({ transcriptData: mockData });
@@ -461,7 +493,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
                                                 <div className="flex items-center gap-1 text-green-700">
                                                     <Check size={10} />
                                                     <span className="text-[10px] font-medium opacity-80">
-                                                        Calculated on {tgpaStatus[term.id]?.date}
+                                                        Calculated on {formatDate(tgpaStatus[term.id]?.date)}
                                                     </span>
                                                 </div>
                                             )}
@@ -480,7 +512,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
                                                 <div className="flex items-center justify-end gap-2 w-full">
                                                     <div className="flex flex-col items-end mr-2">
                                                         <span className="text-[10px] text-gray-500">
-                                                            Generated on {termReportStatus[term.id]?.date}
+                                                            Generated on {formatDate(termReportStatus[term.id]?.date)}
                                                         </span>
                                                     </div>
 
@@ -552,7 +584,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
                                             <span className="text-xs font-medium text-green-700 mt-1">Calculated till {cgpa.tillTerm}</span>
                                             <div className="flex items-center gap-1 text-gray-400 text-[10px] mt-0.5">
                                                 <Calendar size={10} />
-                                                <span>Calculated on {cgpa.date}</span>
+                                                <span>Calculated on {formatDate(cgpa.date)}</span>
                                             </div>
                                         </div>
                                     )}
@@ -607,7 +639,7 @@ function CalculationModal({ isOpen, onClose, programs, cohorts, templates }: {
                                             </div>
                                             <div className="flex items-center justify-center gap-1 text-gray-500 text-xs text-center mt-2">
                                                 <Calendar size={10} />
-                                                Generated on {transcriptData.date}
+                                                Generated on {formatDate(transcriptData.date)}
                                             </div>
                                         </div>
                                     ) : (
@@ -641,11 +673,30 @@ export default function Dashboard({ templates, onCreate, onEdit, onUpdateTemplat
     const PROGRAM_OPTIONS = ["PGP TBM", "PGP Rise", "UG Programme", "Masters Union", "Executive MBA"];
     const COHORT_OPTIONS = ["Class of 2023", "Class of 2024", "Class of 2025", "Class of 2026", "Cohort 1", "Cohort 2"];
     const DESIGN_TYPE_OPTIONS = ["transcript", "term-report"];
-    const [showCalculation, setShowCalculation] = useState(false);
-    const [activeTab, setActiveTab] = useState<'designs' | 'history'>('designs');
+
+    const [showCalculation, setShowCalculation] = useState(() => {
+        return localStorage.getItem('calc_modal_open') === 'true';
+    });
+    const [activeTab, setActiveTab] = useState<'designs' | 'history'>(() => {
+        return (localStorage.getItem('dashboard_active_tab') as 'designs' | 'history') || 'designs';
+    });
     const [history, setHistory] = useState<any[]>([]);
-    const [historyProgramFilter, setHistoryProgramFilter] = useState<string[]>([]);
-    const [historyCohortFilter, setHistoryCohortFilter] = useState<string[]>([]);
+    const [historyProgramFilter, setHistoryProgramFilter] = useState<string[]>(() => {
+        const saved = localStorage.getItem('history_program_filter');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [historyCohortFilter, setHistoryCohortFilter] = useState<string[]>(() => {
+        const saved = localStorage.getItem('history_cohort_filter');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    // Save UI state to localStorage
+    useEffect(() => {
+        localStorage.setItem('calc_modal_open', showCalculation.toString());
+        localStorage.setItem('dashboard_active_tab', activeTab);
+        localStorage.setItem('history_program_filter', JSON.stringify(historyProgramFilter));
+        localStorage.setItem('history_cohort_filter', JSON.stringify(historyCohortFilter));
+    }, [showCalculation, activeTab, historyProgramFilter, historyCohortFilter]);
 
     // Function to load calculation history from localStorage
     const loadHistory = () => {
@@ -705,13 +756,20 @@ export default function Dashboard({ templates, onCreate, onEdit, onUpdateTemplat
                     }
 
                     if (program !== "Unknown") {
-                        // Simple dedup: if exact same program/cohort/status/date exists in log, skip this snapshot
-                        const existsInLog = items.some(x =>
-                            x.program === program &&
-                            x.cohort === cohort &&
-                            x.status === status &&
-                            x.calculatedDate === date
-                        );
+                        // Improved dedup: check if a log entry exists for this program/cohort with a similar action
+                        // We check if the scanned status is contained within the logged status (e.g., "TGPA Calculated" in "TGPA Calculated (Term I)")
+                        const existsInLog = items.some(x => {
+                            if (x.program !== program || x.cohort !== cohort) return false;
+
+                            // Check for status similarity
+                            const statusMatch = x.status.includes(status) || status.includes(x.status);
+                            if (!statusMatch) return false;
+
+                            // Check for date similarity (within 10 seconds)
+                            const d1 = new Date(x.calculatedDate).getTime();
+                            const d2 = new Date(date).getTime();
+                            return Math.abs(d1 - d2) < 10000;
+                        });
 
                         if (!existsInLog) {
                             items.push({
@@ -730,29 +788,8 @@ export default function Dashboard({ templates, onCreate, onEdit, onUpdateTemplat
             }
         }
 
-        // Sort by date logic (attempt to parse dates)
+        // Sort by absolute time
         setHistory(items.sort((a, b) => {
-            const parseDate = (d: string) => {
-                // Handle DD/MM/YYYY or YYYY-MM-DD or standard Date string
-                // Assuming toLocaleDateString uses mostly standard formats or slashes
-                // Simple attempt:
-                const d1 = new Date(d);
-                if (!isNaN(d1.getTime())) return d1.getTime();
-
-                // Try DD/MM/YYYY
-                const parts = d.split('/');
-                if (parts.length === 3) {
-                    // Assume DD/MM/YYYY vs MM/DD/YYYY? 
-                    // US locale is MM/DD/YYYY. India is DD/MM/YYYY.
-                    // Let's assume user locale. But we can't control it easily.
-                    // Fallback: just return current time if fail
-                    return 0;
-                }
-                return 0;
-            };
-            // Actually, comparing string timestamps is flawed if not ISO. 
-            // Better to rely on creation timestamp if we had one.
-            // For now, let's treat these as string comparisons as fallback or basic Date parse.
             return new Date(b.calculatedDate).getTime() - new Date(a.calculatedDate).getTime();
         }));
     };
@@ -898,8 +935,8 @@ export default function Dashboard({ templates, onCreate, onEdit, onUpdateTemplat
                                                 />
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                                                {new Date(template.lastModified).toLocaleDateString()}
-                                                <span className="block text-xs text-gray-400">{new Date(template.lastModified).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                {formatDate(template.lastModified)}
+                                                <span className="block text-xs text-gray-400">{formatTime(template.lastModified)}</span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <button
@@ -996,8 +1033,8 @@ export default function Dashboard({ templates, onCreate, onEdit, onUpdateTemplat
                                                     {entry.calculatedBy}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                    {new Date(entry.calculatedDate).toLocaleDateString()}
-                                                    <span className="block text-xs text-gray-400">{new Date(entry.calculatedDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    {formatDate(entry.calculatedDate)}
+                                                    <span className="block text-xs text-gray-400">{formatTime(entry.calculatedDate)}</span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-center">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${entry.status.includes('Transcript')
