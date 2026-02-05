@@ -791,7 +791,7 @@ export default function Dashboard({ templates, onCreate, onEdit, onUpdateTemplat
                 {/* Tabs */}
                 <div className="flex space-x-1 rounded-xl bg-gray-200 p-1 mb-6 w-fit">
                     <button
-                        className={`flex items-center gap-2 w-full rounded-lg py-2.5 px-6 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2 ${activeTab === 'designs'
+                        className={`flex items-center gap-2 w-full rounded-lg py-2.5 px-6 text-sm font-medium leading-5 whitespace-nowrap ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2 ${activeTab === 'designs'
                             ? 'bg-white text-indigo-700 shadow'
                             : 'text-gray-600 hover:bg-white/[0.12] hover:text-indigo-600'
                             }`}
@@ -801,7 +801,7 @@ export default function Dashboard({ templates, onCreate, onEdit, onUpdateTemplat
                         Transcript Designs
                     </button>
                     <button
-                        className={`flex items-center gap-2 w-full rounded-lg py-2.5 px-6 text-sm font-medium leading-5 ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2 ${activeTab === 'history'
+                        className={`flex items-center gap-2 w-full rounded-lg py-2.5 px-6 text-sm font-medium leading-5 whitespace-nowrap ring-white ring-opacity-60 ring-offset-2 ring-offset-indigo-400 focus:outline-none focus:ring-2 ${activeTab === 'history'
                             ? 'bg-white text-indigo-700 shadow'
                             : 'text-gray-600 hover:bg-white/[0.12] hover:text-indigo-600'
                             }`}
