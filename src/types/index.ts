@@ -100,8 +100,19 @@ export interface TranscriptData {
 export interface TranscriptTemplate {
     id: string;
     name: string;
+    types: ('transcript' | 'term-report')[];
     lastModified: string;
     programs: string[]; // e.g. ["PGP TBM", "UG"]
     cohorts: string[];  // e.g. ["Class of 2024", "Class of 2025"]
     data: TranscriptData;
+}
+
+export interface CalculationHistory {
+    id: string;
+    program: string;
+    cohort: string;
+    calculatedDate: string;
+    calculatedBy: string; // "Admin User" (Mock)
+    status: 'Completed' | 'Pending';
+    downloadUrl?: string;
 }

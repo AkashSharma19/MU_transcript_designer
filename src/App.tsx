@@ -52,6 +52,7 @@ function App() {
       const newTemplate: TranscriptTemplate = {
         id: uuidv4(),
         name,
+        types: ['transcript'],
         lastModified: new Date().toISOString(),
         programs: [],
         cohorts: [],
@@ -63,9 +64,31 @@ function App() {
   };
 
   const handleUpdateTemplateMeta = (id: string, updates: Partial<TranscriptTemplate>) => {
-    setTemplates(prev => prev.map(t =>
-      t.id === id ? { ...t, ...updates } : t
-    ));
+    setTemplates(prev => {
+      // If we are updating cohorts, we need to ensure exclusivity
+      if (updates.cohorts) {
+        const newCohorts = updates.cohorts;
+        return prev.map(t => {
+          // If it's the template being updated, apply the updates
+          if (t.id === id) {
+            return { ...t, ...updates };
+          }
+          // For other templates, remove any cohorts that are now newly claimed by the target template
+          const filteredCohorts = t.cohorts.filter(c => !newCohorts.includes(c));
+
+          // Only return a new object if changes were actually made
+          if (filteredCohorts.length !== t.cohorts.length) {
+            return { ...t, cohorts: filteredCohorts };
+          }
+          return t;
+        });
+      }
+
+      // Standard update for other fields (programs, names, etc.)
+      return prev.map(t =>
+        t.id === id ? { ...t, ...updates } : t
+      );
+    });
   };
 
   const activeTemplate = templates.find(t => t.id === activeTemplateId);
